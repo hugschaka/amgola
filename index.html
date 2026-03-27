@@ -788,25 +788,19 @@ async function loadSongsFromDB() {
 }
 
 async function saveSongToDB(song, catName, audioFile) {
-  try {
-    let audioUrl = null;
-    if (audioFile) {
-      const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const { error: upErr } = await db.storage.from('audio').upload(path, audioFile);
-      if (!upErr) {
-        const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
-        audioUrl = urlData.publicUrl;
-      }
-    }
-    await db.from('songs').insert({
-      id: song.id,
-      title: song.title,
-      category: catName,
-      lyrics_pt: song.pt,
-      lyrics_he: song.he,
-      audio_url: audioUrl
-    });
-  } catch(e) { console.warn('Supabase save failed', e); }
+  let audioUrl = null;
+  if (audioFile) {
+    const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile);
+    if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
+    const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
+    audioUrl = urlData.publicUrl;
+  }
+  const { error } = await db.from('songs').insert({
+    id: song.id, title: song.title, category: catName,
+    lyrics_pt: song.pt, lyrics_he: song.he, audio_url: audioUrl
+  });
+  if (error) throw new Error('שגיאת שמירה: ' + error.message);
 }
 
 /* ================================================================
@@ -1109,7 +1103,7 @@ dndZone.addEventListener('drop', e => {
   applyFile(e.dataTransfer.files[0]);
 });
 
-function handleUpload(e) {
+async function handleUpload(e) {
   e.preventDefault();
   const name = document.getElementById('f-name').value.trim();
   const cat  = document.getElementById('f-cat').value;
@@ -1125,20 +1119,26 @@ function handleUpload(e) {
 
   SONGS[cat].unshift(song);
   const audioFileRef = document.getElementById('f-audio').files[0] || null;
-  saveSongToDB(song, cat, audioFileRef);
   pendingAudio = null;
   closeUpload();
-  showToast('✓ "' + name + '" הועלה בהצלחה!');
+
+  try {
+    await saveSongToDB(song, cat, audioFileRef);
+    showToast('✓ "' + name + '" הועלה בהצלחה!');
+  } catch(err) {
+    showToast('⚠ השיר נשמר זמנית בלבד — ' + err.message, true);
+  }
 }
 
 /* ================================================================
    TOAST
 ================================================================ */
-function showToast(msg) {
+function showToast(msg, isError = false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
+  t.style.background = isError ? '#e63946' : '#06d6a0';
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3400);
+  setTimeout(() => t.classList.remove('show'), isError ? 5000 : 3400);
 }
 
 /* ================================================================
