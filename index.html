@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>שירי אנגולה</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Karantina:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    /* ── RESET ── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --blue:   #5c9db3;
+      --amber:  #c9842a;
+      --tan:    #c5a86a;
+      --white:  #fffdf7;
+      --ease:   0.32s cubic-bezier(0.4,0,0.2,1);
+      --circle-d: 560px;
+    }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: 'Heebo','Arial Hebrew',sans-serif;
+      direction: rtl; color: #fff;
+    }
+
+    ::-webkit-scrollbar          { width: 4px; }
+    ::-webkit-scrollbar-track    { background: rgba(255,255,255,.1); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb    { background: rgba(255,255,255,.35); border-radius: 2px; }
+
+    /* ── FONTS ── */
+    @font-face {
+      font-family: 'hillelclm';
+      src: url('./fonts/hillel/hillel/hillelclm-medium-webfont.woff') format('woff'),
+           url('./fonts/hillel/hillel/hillelclm-medium-webfont.ttf') format('truetype');
+      font-weight: normal; font-style: normal;
+    }
+    @font-face {
+      font-family: 'mirimedium';
+      src: url('./fonts/miriwin-webfont.woff') format('woff'),
+           url('./fonts/miriwin-webfont.ttf') format('truetype');
+      font-weight: normal; font-style: normal;
+    }
+
+    /* ── BACKGROUND ── */
+    .bg-photo {
+      position: fixed; inset: 0; z-index: 0;
+      background: url('kashishi.jpeg') center top / cover no-repeat;
+      filter: blur(1.5px) brightness(0.72);
+      image-rendering: high-quality;
+    }
+
+    /* ── PARTICLES ── */
+    #particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+    .particle {
+      position: absolute; bottom: -30px; border-radius: 50%;
+      background: rgba(255,255,255,.1);
+      animation: floatUp linear infinite;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(0deg);       opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: .25; }
+      100% { transform: translateY(-105vh) rotate(540deg); opacity: 0; }
+    }
+
+    /* ── APP SHELL ── */
+    #app { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+
+    /* ══════════════════════════════════════════════════════
+       HERO TITLE  (centered, floating)
+    ══════════════════════════════════════════════════════ */
+    .hero-title {
+      position: fixed;
+      top: 130px;
+      left: 50%; transform: translateX(-50%);
+      z-index: 20;
+      font-family: 'hillelclm', 'Arial Hebrew', serif;
+      font-size: clamp(3.6rem, 7vw, 6rem);
+      font-weight: normal;
+      color: #fff;
+      white-space: nowrap;
+      letter-spacing: 3px;
+      text-shadow: 0 3px 18px rgba(0,0,0,.6), 0 0 55px rgba(255,209,102,.28);
+      pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       UPLOAD BUTTON  (fixed top-left)
+    ══════════════════════════════════════════════════════ */
+    .upload-edge-btn {
+      position: fixed; top: 22px; left: 24px; z-index: 30;
+      display: flex; align-items: center; gap: 8px;
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.85);
+      padding: 8px 12px; border-radius: 30px;
+      font-family: 'Heebo', sans-serif;
+      font-size: .85rem; font-weight: 600;
+      transition: all var(--ease);
+    }
+    .upload-edge-btn:hover { background: rgba(255,255,255,.12); color: #fff; }
+    .upload-edge-btn svg   { flex-shrink: 0; }
+
+    /* ══════════════════════════════════════════════════════
+       SEARCH  (centered, below title)
+    ══════════════════════════════════════════════════════ */
+    .search-wrap {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 30;
+    }
+    .search-inner {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.15);
+      backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,.28);
+      border-radius: 40px;
+      padding: 10px 22px;
+      transition: background var(--ease);
+    }
+    .search-inner:focus-within {
+      background: rgba(255,255,255,.22);
+      border-color: rgba(255,255,255,.5);
+    }
+    .search-inner input {
+      background: none; border: none; outline: none;
+      font-family: 'Heebo', sans-serif;
+      font-size: 1.05rem; color: #fff;
+      width: 260px;
+      direction: rtl;
+    }
+    .search-inner input::placeholder { color: rgba(255,255,255,.6); }
+    .search-inner svg { flex-shrink: 0; opacity: .75; }
+
+    /* Search dropdown */
+    #search-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px); left: 50%;
+      transform: translateX(-50%);
+      width: 300px;
+      background: rgba(20,35,45,.92);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 16px;
+      overflow: hidden;
+      z-index: 50;
+      box-shadow: 0 8px 30px rgba(0,0,0,.4);
+    }
+    .search-result {
+      padding: 10px 18px; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      transition: background var(--ease);
+    }
+    .search-result:last-child { border-bottom: none; }
+    .search-result:hover { background: rgba(255,255,255,.12); }
+    .result-title { font-size: .9rem; font-weight: 600; }
+    .result-cat   { font-size: .74rem; color: rgba(255,255,255,.55); display: block; margin-top: 2px; }
+    .no-results   { padding: 14px 18px; font-size: .88rem; color: rgba(255,255,255,.5); text-align: center; }
+
+    /* ══════════════════════════════════════════════════════
+       CATEGORY CIRCLES  (bottom center)
+    ══════════════════════════════════════════════════════ */
+    .cat-circles-row {
+      position: fixed;
+      bottom: 60px;
+      left: 50%; transform: translateX(-50%);
+      display: flex; gap: 44px; align-items: flex-end;
+      z-index: 10;
+    }
+    .cat-circle-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      cursor: pointer;
+    }
+    .cat-circle {
+      width: 120px; height: 120px; border-radius: 50%;
+      background: var(--c);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow:
+        0 8px 32px rgba(0,0,0,.45),
+        0 0 0 3px rgba(255,255,255,.18),
+        0 20px 60px rgba(0,0,0,.3);
+      transition: transform .25s, box-shadow .25s;
+    }
+    .cat-circle-wrap:hover .cat-circle {
+      transform: scale(1.1) translateY(-7px);
+      box-shadow:
+        0 16px 48px rgba(0,0,0,.55),
+        0 0 0 4px rgba(255,255,255,.32),
+        0 0 80px rgba(255,255,255,.08);
+    }
+    .cat-label {
+      font-size: 1.05rem; font-weight: 700;
+      color: rgba(255,255,255,.92);
+      text-shadow: 0 1px 6px rgba(0,0,0,.55);
+      text-align: center;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       BOTTOM BRAND
+    ══════════════════════════════════════════════════════ */
+    .bottom-brand {
+      position: fixed; bottom: 18px; right: 40px;
+      z-index: 10;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .brand-text {
+      font-family: 'Karantina', cursive;
+      font-size: 1.5rem;
+      color: rgba(255,255,255,.85);
+      text-shadow: 0 2px 10px rgba(0,0,0,.55);
+      letter-spacing: 5px;
+    }
+    .angola-badge {
+      width: 38px; height: 38px; border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 2px 10px rgba(0,0,0,.4);
+    }
+
+    /* ══════════════════════════════════════════════════════
+       CIRCLE OVERLAY  (category list  +  song view)
+    ══════════════════════════════════════════════════════ */
+    #circle-overlay {
+      position: fixed; inset: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s;
+    }
+    #circle-overlay.open { opacity: 1; pointer-events: all; }
+
+    .circle-inner {
+      width: var(--circle-d); height: var(--circle-d);
+      border-radius: 50%;
+      background: var(--blue);
+      overflow: hidden;
+      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center;
+      padding: 62px 70px;
+      box-shadow:
+        0 30px 80px rgba(0,0,0,.55),
+        0 0 0 2px rgba(255,255,255,.2),
+        0 0 60px rgba(255,255,255,.06);
+      transform: scale(.82) translateY(20px);
+      opacity: 0;
+      transition: transform .42s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      color: rgba(255,255,255,.95);
+      direction: rtl;
+    }
+    #circle-overlay.open .circle-inner { transform: scale(1) translateY(0); opacity: 1; }
+
+    /* Pulsing glow ring when song view is active */
+    .circle-inner.song-active {
+      animation: circleGlow 3s ease-in-out infinite;
+    }
+    @keyframes circleGlow {
+      0%,100% {
+        box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 2px rgba(255,255,255,.2), 0 0 50px rgba(255,255,255,.05);
+      }
+      50% {
+        box-shadow: 0 30px 80px rgba(0,0,0,.55), 0 0 0 5px rgba(255,255,255,.35), 0 0 100px rgba(255,255,255,.14);
+      }
+    }
+
+    /* Close / back buttons */
+    .circ-close {
+      position: absolute; top: 90px; left: 90px;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(0,0,0,.25); border: 1.5px solid rgba(255,255,255,.35);
+      color: #fff; font-size: .95rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--ease);
+    }
+    .circ-close:hover { background: rgba(0,0,0,.5); }
+
+    .circ-back {
+      position: absolute; top: 90px; right: 90px;
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(0,0,0,.2); border: 1.5px solid rgba(255,255,255,.3);
+      color: #fff; font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--ease);
+    }
+    .circ-back:hover { background: rgba(0,0,0,.45); }
+
+    /* ── CAT VIEW ── */
+    #cat-view {
+      width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .cat-view-title {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: 1px;
+      text-align: center; margin-bottom: 14px;
+      color: rgba(255,255,255,.9);
+    }
+    .cat-song-list {
+      list-style: none; width: 100%;
+      flex: 1; overflow-y: auto;
+    }
+    .cat-song-item {
+      padding: 9px 12px; margin: 3px 0;
+      border-radius: 10px; cursor: pointer;
+      font-size: .88rem;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.1);
+      display: flex; align-items: center; gap: 8px;
+      transition: background var(--ease);
+    }
+    .cat-song-item:hover { background: rgba(255,255,255,.22); }
+    .cat-song-item::before { content: '♪'; font-size: .7rem; opacity: .6; }
+
+    /* ── SONG VIEW ── */
+    #song-view {
+      width: 100%; height: 100%;
+      display: none;
+      flex-direction: column; align-items: center;
+    }
+    #song-view.active { display: flex; }
+
+    .song-view-name {
+      font-size: 1rem; font-weight: 700;
+      text-align: center; margin-bottom: 10px;
+      color: rgba(255,255,255,.85);
+      letter-spacing: .5px;
+    }
+    .song-lyrics-scroll {
+      flex: 1; overflow-y: auto; width: 100%;
+      text-align: center;
+      /* leave room for the nav bar at bottom */
+      padding-bottom: 60px;
+    }
+    .song-lyrics-scroll p {
+      font-size: 1.25rem; line-height: 1.95;
+      color: rgba(255,255,255,.95);
+      white-space: pre-line;
+      direction: ltr; text-align: center;
+    }
+
+    /* Translation trigger — bottom-left inside circle */
+    .translation-btn {
+      position: absolute;
+      bottom: 98px; left: 98px;
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.75);
+      font-family: 'Heebo', sans-serif;
+      font-size: .72rem; letter-spacing: .5px;
+      padding: 0;
+      transition: color var(--ease);
+    }
+    .translation-btn:hover { color: #fff; }
+    .translation-btn span { text-decoration: underline; }
+
+    /* ── CIRCLE NAV (inside circle, song view) ── */
+    .circle-nav {
+      position: absolute;
+      bottom: 55px;
+      left: 50%; transform: translateX(-50%);
+      display: flex; gap: 16px; align-items: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    .circle-nav.open { opacity: 1; pointer-events: all; }
+
+    .nav-btn {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: rgba(255,255,255,.18);
+      border: 1.5px solid rgba(255,255,255,.35);
+      color: #fff; font-size: .95rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--ease);
+    }
+    .nav-btn:hover { background: rgba(255,255,255,.32); transform: scale(1.1); }
+
+    #play-pause-btn {
+      width: 50px; height: 50px;
+      background: rgba(255,255,255,.24);
+      font-size: 1.15rem;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       TRANSLATION PANEL  (beside circle, song view only)
+    ══════════════════════════════════════════════════════ */
+    #translation-panel {
+      position: fixed;
+      top: 50%; left: calc(50% + 300px);
+      transform: translateY(-50%) translateX(20px);
+      width: 230px;
+      background: rgba(15,30,40,.88);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 22px;
+      padding: 18px 18px 18px 14px;
+      z-index: 101;
+      opacity: 0; pointer-events: none;
+      transition: opacity .3s, transform .3s;
+      max-height: 70vh; overflow-y: auto;
+    }
+    #translation-panel.open {
+      opacity: 1; pointer-events: all;
+      transform: translateY(-50%) translateX(0);
+    }
+    .trans-close {
+      position: absolute; top: 10px; left: 12px;
+      background: none; border: none; cursor: pointer;
+      color: rgba(255,255,255,.5); font-size: .9rem;
+      transition: color var(--ease);
+    }
+    .trans-close:hover { color: #fff; }
+    .trans-label {
+      font-size: .65rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,.5);
+      margin-bottom: 10px; padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,.15);
+      direction: rtl; text-align: right;
+    }
+    #trans-lyrics {
+      font-size: .87rem; line-height: 1.85;
+      color: rgba(255,255,255,.88);
+      white-space: pre-line;
+      direction: rtl; text-align: right;
+    }
+
+    /* ══════════════════════════════════════════════════════
+       UPLOAD OVERLAY
+    ══════════════════════════════════════════════════════ */
+    #upload-overlay {
+      position: fixed; inset: 0; z-index: 80;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      background: rgba(7,28,44,.82);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--ease);
+    }
+    #upload-overlay.open { opacity: 1; pointer-events: all; }
+
+    .upload-box {
+      background: linear-gradient(150deg, rgba(244,226,192,.98), rgba(255,250,240,.99));
+      border-radius: 40px;
+      padding: 36px 36px 28px;
+      width: 100%; max-width: 580px; max-height: 92vh;
+      overflow-y: auto; position: relative;
+      box-shadow: 0 30px 80px rgba(0,0,0,.45);
+      transform: scale(.86) translateY(22px);
+      transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+      opacity: 0; direction: rtl; color: #1a2b35;
+    }
+    #upload-overlay.open .upload-box { transform: scale(1) translateY(0); opacity: 1; }
+
+    .upload-close {
+      position: absolute; top: 14px; left: 14px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: #e76f51; border: none; color: #fff;
+      font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all var(--ease);
+    }
+    .upload-close:hover { background: #0a3d55; transform: rotate(90deg) scale(1.1); }
+
+    .upload-box-title {
+      font-family: 'hillelclm', serif; font-size: 1.6rem;
+      color: #0a3d55; text-align: center;
+      margin-bottom: 24px; padding-bottom: 16px;
+      border-bottom: 2px solid rgba(201,168,124,.45);
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: .88rem; font-weight: 700; color: #0a3d55; margin-bottom: 7px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 11px 14px;
+      border: 2px solid rgba(201,168,124,.45); border-radius: 16px;
+      background: rgba(255,255,255,.75);
+      font-family: 'Heebo', sans-serif; font-size: .88rem; color: #1a2b35;
+      outline: none; direction: rtl;
+      transition: border-color var(--ease);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: #1a6b8a; background: rgba(255,255,255,.95);
+    }
+    .form-textarea { resize: vertical; min-height: 110px; line-height: 1.65; }
+    .form-textarea.ltr { direction: ltr; text-align: left; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+    .dnd-zone {
+      position: relative;
+      border: 2px dashed rgba(26,107,138,.45); border-radius: 16px;
+      padding: 26px 20px; text-align: center; cursor: pointer;
+      background: rgba(255,255,255,.4);
+      transition: all var(--ease);
+    }
+    .dnd-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .dnd-zone:hover, .dnd-zone.drag-over {
+      border-color: #1a6b8a; background: rgba(46,196,182,.07);
+    }
+    .dnd-icon { font-size: 2rem; }
+    .dnd-main { margin-top: 7px; font-size: .87rem; color: #1a6b8a; font-weight: 600; }
+    .dnd-sub  { margin-top: 4px; font-size: .76rem; color: #888; }
+    .dnd-fname { margin-top: 7px; font-size: .82rem; color: #e76f51; font-weight: 700; }
+
+    .upload-submit {
+      width: 100%; padding: 14px; margin-top: 8px;
+      background: linear-gradient(135deg, #1a6b8a, #2ec4b6);
+      color: #fff; border: none; border-radius: 16px;
+      font-family: 'Heebo', sans-serif; font-size: 1.05rem; font-weight: 800;
+      letter-spacing: 1px; cursor: pointer;
+      box-shadow: 0 4px 18px rgba(26,107,138,.4);
+      transition: all var(--ease);
+    }
+    .upload-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(26,107,138,.55); }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 26px; left: 26px; z-index: 300;
+      background: #06d6a0; color: #fff;
+      padding: 12px 20px; border-radius: 18px;
+      font-weight: 700; font-size: .88rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,.25);
+      transform: translateY(80px); opacity: 0; pointer-events: none;
+      transition: all .4s cubic-bezier(.34,1.56,.64,1);
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      :root { --circle-d: 480px; }
+      .circ-close { top: 78px; left: 78px; }
+      .circ-back  { top: 78px; right: 78px; }
+      .translation-btn { bottom: 78px; left: 78px; }
+      #translation-panel { left: calc(50% + 255px); width: 190px; }
+    }
+    @media (max-width: 700px) {
+      :root { --circle-d: min(90vw, 90vh); }
+      #translation-panel {
+        left: 50%; transform: translateX(-50%) translateY(10px);
+        top: calc(50% + var(--circle-d)/2 + 70px);
+        width: 260px;
+      }
+      #translation-panel.open {
+        transform: translateX(-50%) translateY(0);
+      }
+      .two-col { grid-template-columns: 1fr; }
+      .cat-circles-row { gap: 20px; }
+      .cat-circle { width: 88px; height: 88px; }
+      .search-inner input { width: 180px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- BACKGROUND -->
+  <div class="bg-photo"></div>
+
+  <!-- PARTICLES -->
+  <div id="particles"></div>
+
+  <!-- ══ HERO TITLE (centered, floating) ══ -->
+  <h1 class="hero-title">שירי אנגולה</h1>
+
+  <!-- ══ UPLOAD BUTTON (fixed top-left) ══ -->
+  <button class="upload-edge-btn" onclick="openUpload()" title="העלאת שיר">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="17 8 12 3 7 8"/>
+      <line x1="12" y1="3" x2="12" y2="15"/>
+    </svg>
+    <span>העלאת שיר</span>
+  </button>
+
+  <!-- ══ SEARCH (centered below title) ══ -->
+  <div class="search-wrap">
+    <div class="search-inner">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <input id="search-input" type="text" placeholder="חפש שיר..."
+             oninput="handleSearch(this.value)"
+             onkeydown="if(event.key==='Escape')clearSearch()">
+    </div>
+    <div id="search-dropdown"></div>
+  </div>
+
+  <!-- ══ CATEGORY CIRCLES  (bottom center) ══ -->
+  <div class="cat-circles-row">
+
+    <!-- Berimbau — שיעור מתחילים -->
+    <div class="cat-circle-wrap" onclick="openCategoryView('שיעור מתחילים')">
+      <div class="cat-circle" style="--c:#5c9db3">
+        <svg viewBox="0 0 80 110" width="56" height="74" fill="none"
+             stroke="rgba(255,255,255,.9)" stroke-width="3" stroke-linecap="round">
+          <!-- bow arc -->
+          <path d="M 22,8 Q 72,55 22,102"/>
+          <!-- string -->
+          <line x1="22" y1="8" x2="22" y2="102"/>
+          <!-- gourd -->
+          <circle cx="13" cy="84" r="13" fill="rgba(255,255,255,.22)"
+                  stroke="rgba(255,255,255,.88)" stroke-width="2.5"/>
+        </svg>
+      </div>
+      <span class="cat-label">שיעור מתחילים</span>
+    </div>
+
+    <!-- Atabaque — שיעורי מוזיקה -->
+    <div class="cat-circle-wrap" onclick="openCategoryView('שיעורי מוזיקה')">
+      <div class="cat-circle" style="--c:#c9842a">
+        <svg viewBox="0 0 60 100" width="46" height="78" fill="none"
+             stroke="rgba(255,255,255,.9)" stroke-width="3" stroke-linecap="round">
+          <!-- drum body trapezoid -->
+          <path d="M 10,18 L 7,86 L 53,86 L 50,18 Z" fill="rgba(255,255,255,.12)"/>
+          <!-- top rim ellipse -->
+          <ellipse cx="30" cy="18" rx="20" ry="7" fill="rgba(255,255,255,.22)"/>
+          <!-- base -->
+          <line x1="7" y1="86" x2="53" y2="86"/>
+          <!-- tension ropes -->
+          <line x1="17" y1="18" x2="13" y2="86"/>
+          <line x1="30" y1="22" x2="30" y2="86"/>
+          <line x1="43" y1="18" x2="47" y2="86"/>
+        </svg>
+      </div>
+      <span class="cat-label">שיעורי מוזיקה</span>
+    </div>
+
+    <!-- Pandeiro — שירי הודה -->
+    <div class="cat-circle-wrap" onclick="openCategoryView('שירי הודה')">
+      <div class="cat-circle" style="--c:#c5a86a">
+        <svg viewBox="0 0 90 90" width="68" height="68" fill="none"
+             stroke="rgba(255,255,255,.9)" stroke-width="3">
+          <!-- outer rim -->
+          <circle cx="45" cy="45" r="37" fill="rgba(255,255,255,.1)"/>
+          <!-- inner skin ring -->
+          <circle cx="45" cy="45" r="26" fill="rgba(255,255,255,.07)"/>
+          <!-- jingle platinelas (4 positions) -->
+          <rect x="4"  y="39" width="9" height="12" rx="2.5"
+                fill="rgba(255,255,255,.55)" stroke="none"/>
+          <rect x="77" y="39" width="9" height="12" rx="2.5"
+                fill="rgba(255,255,255,.55)" stroke="none"/>
+          <rect x="39" y="4"  width="12" height="9"  rx="2.5"
+                fill="rgba(255,255,255,.55)" stroke="none"/>
+          <rect x="39" y="77" width="12" height="9"  rx="2.5"
+                fill="rgba(255,255,255,.55)" stroke="none"/>
+        </svg>
+      </div>
+      <span class="cat-label">שירי הודה</span>
+    </div>
+
+  </div>
+
+  <!-- ══ BOTTOM BRAND ══ -->
+  <div class="bottom-brand">
+    <span class="brand-text">מטו ג'י דנטרו</span>
+    <img class="angola-badge" src="angola.jpeg" alt="Mato de Dentro">
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       CIRCLE OVERLAY
+  ═══════════════════════════════════════════ -->
+  <div id="circle-overlay" onclick="handleOverlayBgClick(event)">
+    <div class="circle-inner" id="circle-inner">
+
+      <!-- Close button (always visible) -->
+      <button class="circ-close" onclick="closeOverlay()" aria-label="סגור">✕</button>
+
+      <!-- CAT VIEW — song list -->
+      <div id="cat-view">
+        <h2 class="cat-view-title" id="cat-view-title"></h2>
+        <ul class="cat-song-list" id="cat-song-list"></ul>
+      </div>
+
+      <!-- SONG VIEW — lyrics -->
+      <div id="song-view">
+        <button class="circ-back" onclick="backToCat()" aria-label="חזרה">‹</button>
+        <p class="song-view-name" id="song-view-name"></p>
+        <div class="song-lyrics-scroll">
+          <p id="song-pt-lyrics"></p>
+        </div>
+        <!-- Translation trigger -->
+        <button class="translation-btn" onclick="toggleTranslation()">
+          <span>תרגום</span>
+        </button>
+        <!-- Playback nav — inside the circle -->
+        <div class="circle-nav" id="circle-nav">
+          <button class="nav-btn" onclick="prevSong()" title="שיר קודם">⏮</button>
+          <button class="nav-btn" id="play-pause-btn" onclick="togglePlay()" title="נגן / השהה">▶</button>
+          <button class="nav-btn" onclick="nextSong()" title="שיר הבא">⏭</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══ TRANSLATION PANEL ══ -->
+  <div id="translation-panel">
+    <button class="trans-close" onclick="toggleTranslation()">✕</button>
+    <div class="trans-label">תרגום עברי</div>
+    <div id="trans-lyrics"></div>
+  </div>
+
+  <audio id="main-audio"></audio>
+
+  <!-- ══════════════════════════════════════════
+       UPLOAD OVERLAY
+  ═══════════════════════════════════════════ -->
+  <div id="upload-overlay" onclick="if(event.target===this) closeUpload()">
+    <div class="upload-box">
+      <button class="upload-close" onclick="closeUpload()" aria-label="סגור">✕</button>
+      <h2 class="upload-box-title">העלאת שיר חדש</h2>
+
+      <form id="upload-form" onsubmit="handleUpload(event)">
+        <div class="form-group">
+          <label class="form-label" for="f-name">שם השיר *</label>
+          <input class="form-input" id="f-name" type="text" placeholder="הכנס את שם השיר..." required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f-cat">קטגוריה *</label>
+          <select class="form-select" id="f-cat" required>
+            <option value="">-- בחר קטגוריה --</option>
+            <option value="שיעור מתחילים">שיעור מתחילים</option>
+            <option value="שיעורי מוזיקה">שיעורי מוזיקה</option>
+            <option value="שירי הודה">שירי הודה</option>
+          </select>
+        </div>
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label" for="f-he">מילים — עברית</label>
+            <textarea class="form-textarea" id="f-he" placeholder="הכנס מילים בעברית..."></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="f-pt">מילים — פורטוגזית</label>
+            <textarea class="form-textarea ltr" id="f-pt" placeholder="Enter Portuguese lyrics..."></textarea>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">קובץ שמע</label>
+          <div class="dnd-zone" id="dnd-zone">
+            <input type="file" id="f-audio" accept="audio/*" onchange="onFileSelect(event)">
+            <div class="dnd-icon">🎵</div>
+            <div class="dnd-main">גרור קובץ לכאן</div>
+            <div class="dnd-sub">או לחץ לבחירת קובץ · mp3, wav, ogg...</div>
+            <div class="dnd-fname" id="dnd-fname"></div>
+          </div>
+        </div>
+        <button type="submit" class="upload-submit">⬆&nbsp; העלה</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast"></div>
+
+</div><!-- #app -->
+
+<script>
+/* ================================================================
+   SUPABASE
+================================================================ */
+const SUPABASE_URL = 'https://lgeinxbvhbtxtllylcvv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_8QhpgR0sDnH9SWbgVl9-jw_SVgKyQZB';
+const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+async function loadSongsFromDB() {
+  try {
+    const { data, error } = await db.from('songs').select('*').order('created_at');
+    if (error || !data) return;
+    data.forEach(s => {
+      if (SONGS[s.category]) {
+        // avoid duplicates
+        if (!SONGS[s.category].find(x => x.id === s.id)) {
+          SONGS[s.category].push({
+            id: s.id, title: s.title,
+            pt: s.lyrics_pt || '', he: s.lyrics_he || '',
+            audio: s.audio_url || null
+          });
+        }
+      }
+    });
+  } catch(e) { console.warn('Supabase load failed', e); }
+}
+
+async function saveSongToDB(song, catName, audioFile) {
+  try {
+    let audioUrl = null;
+    if (audioFile) {
+      const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const { error: upErr } = await db.storage.from('audio').upload(path, audioFile);
+      if (!upErr) {
+        const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
+        audioUrl = urlData.publicUrl;
+      }
+    }
+    await db.from('songs').insert({
+      id: song.id,
+      title: song.title,
+      category: catName,
+      lyrics_pt: song.pt,
+      lyrics_he: song.he,
+      audio_url: audioUrl
+    });
+  } catch(e) { console.warn('Supabase save failed', e); }
+}
+
+/* ================================================================
+   SONG DATA
+================================================================ */
+const SONGS = {
+  "שיעור מתחילים": [
+    { id:'s1', title:'Paranauê',
+      pt:'Paranauê, paranauê, paraná\nParanauê, paranauê, paraná\nÉ de Angolinha, meu bem\nParanauê, paranauê, paraná',
+      he:'פרנאואה, פרנאואה, פרנה\nפרנאואה, פרנאואה, פרנה\nהוא מאנגולינה, חביבי\nפרנאואה, פרנאואה, פרנה', audio:null },
+    { id:'s2', title:'Capoeira Me Enganou',
+      pt:'Capoeira me enganou\nCapoeira me enganou\nQue capoeira é difícil\nCapoeira me enganou',
+      he:'קפוארה רימתה אותי\nקפוארה רימתה אותי\nכי קפוארה קשה\nקפוארה רימתה אותי', audio:null },
+    { id:'s3', title:'Vou Jogar Capoeira',
+      pt:'Vou jogar capoeira\nNa beira do rio\nSe cair na água\nVou nadar no frio',
+      he:'אני הולך לשחק קפוארה\nעל שפת הנהר\nאם אפול למים\nאשחה בקרירות', audio:null },
+    { id:'s4', title:'Sai, Sai, Sai',
+      pt:'Sai, sai, sai\nSai da minha frente\nSai, sai, sai\nQue eu vou passar',
+      he:'לך, לך, לך\nלך מהדרך שלי\nלך, לך, לך\nאני רוצה לעבור', audio:null },
+    { id:'s5', title:'Dona Maria do Camará',
+      pt:'Dona Maria do Camará\nDona Maria do Camará\nOlha o nego fugiu\nDona Maria do Camará',
+      he:'דונה מריה דו קמרה\nדונה מריה דו קמרה\nתסתכלי, הוא ברח\nדונה מריה דו קמרה', audio:null }
+  ],
+  "שיעורי מוזיקה": [
+    { id:'m1', title:'Berimbau',
+      pt:'Quem foi que inventou o berimbau?\nFoi o negro que trouxe do seu lugar\nBerimbau, instrumento divinal\nCanta, toca, faz a capoeira rolar',
+      he:'מי המציא את הברימבאו?\nהיה זה הכושי שהביא ממקומו\nברימבאו, כלי נגינה אלוהי\nשר, נגן, גורם לקפוארה לזרום', audio:null },
+    { id:'m2', title:'Pandeiro Bonito',
+      pt:'Pandeiro bonito\nPandeiro encantado\nEu toco pandeiro\nPra jogar capoeira',
+      he:'פנדיירו יפה\nפנדיירו מוקסם\nאני מנגן פנדיירו\nכדי לשחק קפוארה', audio:null },
+    { id:'m3', title:'O Atabaque',
+      pt:'O atabaque toca\nNa roda de Angola\nO negro joga\nE a música ressoa',
+      he:'האטאבקה מנגן\nבחוג של אנגולה\nהשחקן משחק\nוהמוזיקה מהדהדת', audio:null },
+    { id:'m4', title:'A Viola Chora',
+      pt:'A viola chora\nO berimbau canta\nA roda de capoeira\nA nossa gente aguarda',
+      he:'הויולה בוכה\nהברימבאו שר\nחוג הקפוארה\nעמנו מחכה', audio:null },
+    { id:'m5', title:'Ritmo de Angola',
+      pt:'O ritmo de Angola\nÉ lento e malicioso\nO jogador se move\nSutil e misterioso',
+      he:'קצב האנגולה\nאיטי ומלא ערמה\nהשחקן נע\nעדין ומסתורי', audio:null }
+  ],
+  "שירי הודה": [
+    { id:'h1', title:'Obrigado Mestre',
+      pt:'Obrigado mestre\nPor me ensinar\nA capoeira Angola\nÉ minha vida e meu lar',
+      he:'תודה מאסטר\nשלימדת אותי\nקפוארה אנגולה\nהיא חיי וביתי', audio:null },
+    { id:'h2', title:'Graças a Deus',
+      pt:'Graças a Deus\nPor este dom\nA capoeira Angola\nFaz o meu coração cantar',
+      he:'תודה לאל\nעל מתנה זו\nקפוארה אנגולה\nגורמת ללבי לשיר', audio:null },
+    { id:'h3', title:'Axé Angola',
+      pt:'Axé Angola\nAxé meu mestre\nAxé capoeira\nAxé pra nós dois',
+      he:'אשה אנגולה\nאשה מאסטר שלי\nאשה קפוארה\nאשה לשנינו', audio:null },
+    { id:'h4', title:'Bendito Seja',
+      pt:'Bendito seja o mestre\nBendito seja o jogo\nBendita seja Angola\nBendita seja a roda',
+      he:'ברוך המאסטר\nברוך המשחק\nברוכה אנגולה\nברוך החוג', audio:null },
+    { id:'h5', title:'Meu Primeiro Mestre',
+      pt:'Meu primeiro mestre\nMe ensinou a jogar\nMe ensinou a ginga\nMe ensinou a amar',
+      he:'המאסטר הראשון שלי\nלימד אותי לשחק\nלימד אותי גינגה\nלימד אותי לאהוב', audio:null }
+  ]
+};
+
+/* Category colors (match the circles) */
+const CAT_COLORS = {
+  'שיעור מתחילים': '#5c9db3',
+  'שיעורי מוזיקה':   '#c9842a',
+  'שירי הודה':     '#c5a86a'
+};
+
+/* ── State ── */
+let currentCat      = null;
+let currentList     = [];
+let currentIdx      = 0;
+let translationOpen = false;
+let nextId          = 1000;
+let pendingAudio    = null;
+
+const audioEl    = document.getElementById('main-audio');
+const circleInner = document.getElementById('circle-inner');
+
+/* ================================================================
+   CATEGORY VIEW
+================================================================ */
+function openCategoryView(catName) {
+  currentCat  = catName;
+  currentList = SONGS[catName];
+  translationOpen = false;
+
+  circleInner.style.background = CAT_COLORS[catName];
+  circleInner.classList.remove('song-active');
+
+  document.getElementById('cat-view-title').textContent = catName;
+  const ul = document.getElementById('cat-song-list');
+  ul.innerHTML = '';
+  currentList.forEach((song, i) => {
+    const li = document.createElement('li');
+    li.className = 'cat-song-item';
+    li.textContent = song.title;
+    li.onclick = () => openSongView(i);
+    ul.appendChild(li);
+  });
+
+  showView('cat');
+  document.getElementById('circle-overlay').classList.add('open');
+  hideSongNav();
+  closeTranslation();
+}
+
+/* ================================================================
+   SONG VIEW
+================================================================ */
+function openSongView(idx) {
+  currentIdx = idx;
+  translationOpen = false;
+  closeTranslation();
+  renderSongView();
+  showView('song');
+  showSongNav();
+  circleInner.classList.add('song-active');
+}
+
+function renderSongView() {
+  const song = currentList[currentIdx];
+  document.getElementById('song-view-name').textContent = song.title;
+  document.getElementById('song-pt-lyrics').textContent = song.pt;
+  document.getElementById('trans-lyrics').textContent   = song.he;
+
+  audioEl.pause();
+  resetPlayBtn();
+  audioEl.src = song.audio || '';
+}
+
+function backToCat() {
+  audioEl.pause();
+  resetPlayBtn();
+  closeTranslation();
+  showView('cat');
+  hideSongNav();
+  circleInner.classList.remove('song-active');
+}
+
+function showView(which) {
+  document.getElementById('cat-view').style.display  = which === 'cat'  ? 'flex' : 'none';
+  document.getElementById('song-view').style.display = which === 'song' ? 'flex' : 'none';
+}
+
+/* ================================================================
+   NAVIGATION
+================================================================ */
+function prevSong() {
+  currentIdx = (currentIdx - 1 + currentList.length) % currentList.length;
+  closeTranslation();
+  renderSongView();
+}
+function nextSong() {
+  currentIdx = (currentIdx + 1) % currentList.length;
+  closeTranslation();
+  renderSongView();
+}
+
+function togglePlay() {
+  if (!audioEl.src || audioEl.src === window.location.href) {
+    showToast('אין קובץ שמע לשיר זה');
+    return;
+  }
+  if (audioEl.paused) {
+    audioEl.play();
+    document.getElementById('play-pause-btn').textContent = '⏸';
+  } else {
+    audioEl.pause();
+    resetPlayBtn();
+  }
+}
+
+function resetPlayBtn() {
+  document.getElementById('play-pause-btn').textContent = '▶';
+}
+audioEl.addEventListener('ended', resetPlayBtn);
+
+function showSongNav() {
+  document.getElementById('circle-nav').classList.add('open');
+}
+function hideSongNav() {
+  document.getElementById('circle-nav').classList.remove('open');
+  audioEl.pause(); resetPlayBtn();
+}
+
+/* ================================================================
+   TRANSLATION
+================================================================ */
+function toggleTranslation() {
+  translationOpen = !translationOpen;
+  const panel = document.getElementById('translation-panel');
+  if (translationOpen) panel.classList.add('open');
+  else                 panel.classList.remove('open');
+}
+function closeTranslation() {
+  translationOpen = false;
+  document.getElementById('translation-panel').classList.remove('open');
+}
+
+/* ================================================================
+   CLOSE OVERLAY
+================================================================ */
+function closeOverlay() {
+  document.getElementById('circle-overlay').classList.remove('open');
+  closeTranslation();
+  hideSongNav();
+  circleInner.classList.remove('song-active');
+  currentCat = null;
+}
+function handleOverlayBgClick(e) {
+  if (e.target === document.getElementById('circle-overlay')) closeOverlay();
+}
+
+/* ================================================================
+   SEARCH
+================================================================ */
+function handleSearch(q) {
+  const query = q.trim();
+  const dropdown = document.getElementById('search-dropdown');
+  if (!query) { dropdown.style.display = 'none'; return; }
+
+  const qLow = query.toLowerCase();
+  const results = [];
+  Object.entries(SONGS).forEach(([cat, list]) => {
+    list.forEach((song, i) => {
+      if (song.title.toLowerCase().includes(qLow) ||
+          song.pt.toLowerCase().includes(qLow) ||
+          song.he.includes(query)) {
+        results.push({ song, cat, i });
+      }
+    });
+  });
+
+  if (!results.length) {
+    dropdown.innerHTML = '<div class="no-results">לא נמצאו שירים</div>';
+    dropdown.style.display = 'block';
+    return;
+  }
+
+  dropdown.innerHTML = results.map(r => `
+    <div class="search-result"
+         onclick="openFromSearch('${r.cat}',${r.i})">
+      <div class="result-title">${r.song.title}</div>
+      <span class="result-cat">${r.cat}</span>
+    </div>`).join('');
+  dropdown.style.display = 'block';
+}
+
+function openFromSearch(catName, songIdx) {
+  document.getElementById('search-dropdown').style.display = 'none';
+  document.getElementById('search-input').value = '';
+  currentCat   = catName;
+  currentList  = SONGS[catName];
+  currentIdx   = songIdx;
+
+  circleInner.style.background = CAT_COLORS[catName];
+  document.getElementById('circle-overlay').classList.add('open');
+  closeTranslation();
+  renderSongView();
+  showView('song');
+  showSongNav();
+  circleInner.classList.add('song-active');
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-dropdown').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.search-wrap')) {
+    document.getElementById('search-dropdown').style.display = 'none';
+  }
+});
+
+/* ================================================================
+   UPLOAD
+================================================================ */
+function openUpload()  { document.getElementById('upload-overlay').classList.add('open'); }
+function closeUpload() {
+  document.getElementById('upload-overlay').classList.remove('open');
+  document.getElementById('upload-form').reset();
+  document.getElementById('dnd-fname').textContent = '';
+  if (pendingAudio) { URL.revokeObjectURL(pendingAudio); pendingAudio = null; }
+}
+
+function onFileSelect(e) { applyFile(e.target.files[0]); }
+
+function applyFile(file) {
+  if (!file || !file.type.startsWith('audio/')) return;
+  if (pendingAudio) URL.revokeObjectURL(pendingAudio);
+  pendingAudio = URL.createObjectURL(file);
+  document.getElementById('dnd-fname').textContent = '✓ ' + file.name;
+}
+
+const dndZone = document.getElementById('dnd-zone');
+dndZone.addEventListener('dragover',  e => { e.preventDefault(); dndZone.classList.add('drag-over'); });
+dndZone.addEventListener('dragleave', ()  => dndZone.classList.remove('drag-over'));
+dndZone.addEventListener('drop', e => {
+  e.preventDefault(); dndZone.classList.remove('drag-over');
+  applyFile(e.dataTransfer.files[0]);
+});
+
+function handleUpload(e) {
+  e.preventDefault();
+  const name = document.getElementById('f-name').value.trim();
+  const cat  = document.getElementById('f-cat').value;
+  if (!name || !cat) return;
+
+  const song = {
+    id:    'u' + (nextId++),
+    title: name,
+    he:    document.getElementById('f-he').value.trim() || '(אין מילים עבריות)',
+    pt:    document.getElementById('f-pt').value.trim() || '(sem letra)',
+    audio: pendingAudio || null
+  };
+
+  SONGS[cat].unshift(song);
+  const audioFileRef = document.getElementById('f-audio').files[0] || null;
+  saveSongToDB(song, cat, audioFileRef);
+  pendingAudio = null;
+  closeUpload();
+  showToast('✓ "' + name + '" הועלה בהצלחה!');
+}
+
+/* ================================================================
+   TOAST
+================================================================ */
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3400);
+}
+
+/* ================================================================
+   PARTICLES
+================================================================ */
+(function() {
+  const wrap = document.getElementById('particles');
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const sz  = 5 + Math.random() * 16;
+    const dur = 14 + Math.random() * 22;
+    p.style.cssText = [
+      `width:${sz}px`, `height:${sz}px`,
+      `left:${(Math.random()*105-2).toFixed(1)}%`,
+      `animation-duration:${dur.toFixed(1)}s`,
+      `animation-delay:${(-Math.random()*dur).toFixed(1)}s`,
+      `opacity:${(.05+Math.random()*.15).toFixed(2)}`
+    ].join(';');
+    wrap.appendChild(p);
+  }
+})();
+
+/* ================================================================
+   KEYBOARD
+================================================================ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    closeOverlay();
+    closeUpload();
+    clearSearch();
+  }
+});
+
+/* Init views */
+showView('cat');
+loadSongsFromDB();
+</script>
+</body>
+</html>
