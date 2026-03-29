@@ -153,7 +153,7 @@
     .cat-circles-row {
       position: fixed; bottom: 60px;
       left: 50%; transform: translateX(-50%);
-      display: flex; gap: 44px; align-items: center;
+      display: flex; gap: 44px; align-items: flex-start;
       z-index: 10;
     }
     .cat-circle-wrap {
@@ -792,7 +792,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 async function loadSongsFromDB() {
   try {
     const { data, error } = await db.from('songs').select('*').order('created_at');
-    if (error) { showToast('⚠ שגיאת טעינה — ' + error.message, true); return; }
+    if (error) { console.error('Supabase load error:', error); showToast('⚠ שגיאת טעינה — ' + error.message, true); return; }
     if (!data) return;
     data.forEach(s => {
       if (SONGS[s.category]) {
@@ -803,6 +803,11 @@ async function loadSongsFromDB() {
             audio: s.audio_url || null
           });
         }
+      }
+      // keep nextId above any existing DB id to avoid conflicts
+      if (typeof s.id === 'string' && s.id.startsWith('u')) {
+        const n = parseInt(s.id.slice(1), 10);
+        if (!isNaN(n) && n >= nextId) nextId = n + 1;
       }
     });
     if (currentCat) refreshCatList();
@@ -824,7 +829,7 @@ async function saveSongToDB(song, catName, audioFile) {
     id: song.id, title: song.title, category: catName,
     lyrics_pt: song.pt, lyrics_he: song.he, audio_url: audioUrl
   });
-  if (error) throw new Error('שגיאת שמירה: ' + error.message);
+  if (error) { console.error('Supabase insert error:', error); throw new Error('שגיאת שמירה: ' + error.message + (error.code ? ' [' + error.code + ']' : '')); }
 }
 
 async function updateSongInDB(song, catName, audioFile) {
@@ -970,8 +975,10 @@ function backToCat() {
 }
 
 function showView(which) {
-  document.getElementById('cat-view').style.display  = which === 'cat'  ? 'flex' : 'none';
-  document.getElementById('song-view').style.display = which === 'song' ? 'flex' : 'none';
+  const sv = document.getElementById('song-view');
+  document.getElementById('cat-view').style.display = which === 'cat'  ? 'flex' : 'none';
+  sv.style.display = which === 'song' ? 'flex' : 'none';
+  sv.classList.toggle('active', which === 'song');
 }
 
 /* ================================================================
