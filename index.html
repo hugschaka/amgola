@@ -546,13 +546,29 @@
       .cat-circle { width: 80px; height: 80px; }
       .two-col { grid-template-columns: 1fr; }
       .search-inner input { width: 180px; }
+
+      /* Edit button: next to X button on mobile */
+      .song-edit-btn { top: 73px; left: 118px; }
+
+      /* Translation as bottom sheet on mobile */
       #translation-panel {
-        left: 50%;
-        top: calc(50% + var(--circle-d)/2 + 70px);
-        transform: translateX(-50%) translateY(10px);
-        width: min(260px, 90vw);
+        left: 0 !important; right: 0 !important;
+        bottom: 0 !important; top: auto !important;
+        transform: translateY(100%) !important;
+        width: 100% !important; max-width: 100% !important;
+        max-height: 40vh; border-radius: 22px 22px 0 0;
+        padding: 16px 20px 32px;
       }
-      #translation-panel.open { transform: translateX(-50%) translateY(0); }
+      #translation-panel.open {
+        opacity: 1 !important; pointer-events: all !important;
+        transform: translateY(0) !important;
+      }
+
+      /* Circle shrinks upward when translation opens */
+      #circle-overlay.trans-open .circle-inner {
+        transform: scale(0.72) translateY(-60px) !important;
+        transform-origin: center center;
+      }
     }
   </style>
 </head>
@@ -833,6 +849,7 @@ async function saveSongToDB(song, catName, audioFile) {
 }
 
 async function updateSongInDB(song, catName, audioFile) {
+  if (!isUUID(song.id)) return; // hardcoded songs (s1/m1/h1) not in DB
   let audioUrl = song.audio;
   if (audioFile) {
     const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
@@ -849,6 +866,7 @@ async function updateSongInDB(song, catName, audioFile) {
 }
 
 async function deleteSongFromDB(songId) {
+  if (!isUUID(songId)) return; // hardcoded songs not in DB
   const { error } = await db.from('songs').delete().eq('id', songId);
   if (error) throw new Error('שגיאת מחיקה: ' + error.message);
 }
@@ -879,6 +897,18 @@ const CAT_COLORS = {
   'שיעורי מוזיקה': '#c9842a',
   'שירי הודה':     '#c5a86a'
 };
+
+/* ── UUID helpers ── */
+function genId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+function isUUID(id) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
 
 /* ── State ── */
 let currentCat       = null;
@@ -1021,10 +1051,13 @@ function hideSongNav()  { document.getElementById('circle-nav').classList.remove
 function toggleTranslation() {
   translationOpen = !translationOpen;
   document.getElementById('translation-panel').classList.toggle('open', translationOpen);
+  if (window.innerWidth <= 700)
+    document.getElementById('circle-overlay').classList.toggle('trans-open', translationOpen);
 }
 function closeTranslation() {
   translationOpen = false;
   document.getElementById('translation-panel').classList.remove('open');
+  document.getElementById('circle-overlay').classList.remove('trans-open');
 }
 
 /* ================================================================
@@ -1273,7 +1306,7 @@ async function handleUpload(e) {
   }
 
   const song = {
-    id: 'u' + (nextId++), title: name,
+    id: genId(), title: name,
     he: heVal || '(אין מילים עבריות)',
     pt: ptVal || '(sem letra)', audio: null
   };
