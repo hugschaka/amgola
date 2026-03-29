@@ -269,18 +269,24 @@
     .cat-song-item:hover { background: rgba(255,255,255,.22); }
     .cat-song-item::before { content: '♪'; font-size: .7rem; opacity: .6; flex-shrink: 0; }
     .song-item-title { flex: 1; cursor: pointer; user-select: none; }
-    /* Edit button — inside song view, top-left */
-    .song-edit-btn {
-      position: absolute; top: 130px; left: 82px;
+    /* Song bottom actions: עריכה + תרגום below nav */
+    .song-bottom-actions {
+      position: absolute; bottom: 12px;
+      left: 50%; transform: translateX(-50%);
+      display: none; align-items: center; gap: 12px;
+    }
+    #song-view.active .song-bottom-actions { display: flex; }
+
+    .song-edit-btn, .translation-btn {
       background: rgba(0,0,0,.22); border: 1.5px solid rgba(255,255,255,.3);
       color: rgba(255,255,255,.85); font-family: 'Heebo', sans-serif;
       font-size: .72rem; font-weight: 700; letter-spacing: .5px;
-      padding: 4px 10px; border-radius: 20px; cursor: pointer;
-      display: none; align-items: center; gap: 5px;
+      padding: 5px 12px; border-radius: 20px; cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
       transition: all var(--ease);
     }
-    .song-edit-btn:hover { background: rgba(0,0,0,.45); color: #fff; }
-    #song-view.active .song-edit-btn { display: flex; }
+    .song-edit-btn:hover, .translation-btn:hover { background: rgba(0,0,0,.45); color: #fff; }
+    .translation-btn span { text-decoration: underline; }
 
     /* ── SONG VIEW ── */
     #song-view { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; }
@@ -298,16 +304,6 @@
       font-size: 1.25rem; line-height: 1.95; color: rgba(255,255,255,.95);
       white-space: pre-line; direction: ltr; text-align: center;
     }
-
-    .translation-btn {
-      position: absolute; bottom: 98px; left: 98px;
-      background: none; border: none; cursor: pointer;
-      color: rgba(255,255,255,.75); font-family: 'Heebo', sans-serif;
-      font-size: .72rem; letter-spacing: .5px; padding: 0;
-      transition: color var(--ease);
-    }
-    .translation-btn:hover { color: #fff; }
-    .translation-btn span { text-decoration: underline; }
 
     .circle-nav {
       position: absolute; bottom: 55px;
@@ -532,7 +528,6 @@
       :root { --circle-d: 480px; }
       .circ-close { top: 78px; left: 78px; }
       .circ-back  { top: 78px; right: 78px; }
-      .translation-btn { bottom: 78px; left: 78px; }
     }
     @media (max-width: 700px) {
       :root { --circle-d: min(90vw, 90vh); }
@@ -546,9 +541,6 @@
       .cat-circle { width: 80px; height: 80px; }
       .two-col { grid-template-columns: 1fr; }
       .search-inner input { width: 180px; }
-
-      /* Edit button: next to X button on mobile */
-      .song-edit-btn { top: 73px; left: 118px; }
 
       /* Translation as bottom sheet on mobile */
       #translation-panel {
@@ -671,18 +663,18 @@
 
       <div id="song-view">
         <button class="circ-back" onclick="backToCat()" aria-label="חזרה">‹</button>
-        <button class="song-edit-btn" id="song-edit-btn">✏ עריכה</button>
         <p class="song-view-name" id="song-view-name"></p>
         <div class="song-lyrics-scroll">
           <p id="song-pt-lyrics"></p>
         </div>
-        <button class="translation-btn" onclick="toggleTranslation()">
-          <span>תרגום</span>
-        </button>
         <div class="circle-nav" id="circle-nav">
           <button class="nav-btn" onclick="prevSong()" title="שיר קודם">⏮</button>
           <button class="nav-btn" id="play-pause-btn" onclick="togglePlay()" title="נגן / השהה">▶</button>
           <button class="nav-btn" onclick="nextSong()" title="שיר הבא">⏭</button>
+        </div>
+        <div class="song-bottom-actions">
+          <button class="song-edit-btn" id="song-edit-btn">✏ עריכה</button>
+          <button class="translation-btn" onclick="toggleTranslation()"><span>תרגום</span></button>
         </div>
       </div>
     </div>
