@@ -268,14 +268,19 @@
     }
     .cat-song-item:hover { background: rgba(255,255,255,.22); }
     .cat-song-item::before { content: '♪'; font-size: .7rem; opacity: .6; flex-shrink: 0; }
-    .song-item-title { flex: 1; cursor: pointer; }
-    .edit-btn {
-      background: none; border: none; cursor: pointer;
-      color: rgba(255,255,255,.55); font-size: .85rem;
-      padding: 2px 6px; border-radius: 6px; flex-shrink: 0;
-      transition: all .2s;
+    .song-item-title { flex: 1; cursor: pointer; user-select: none; }
+    /* Edit button — inside song view, top-left */
+    .song-edit-btn {
+      position: absolute; top: 130px; left: 82px;
+      background: rgba(0,0,0,.22); border: 1.5px solid rgba(255,255,255,.3);
+      color: rgba(255,255,255,.85); font-family: 'Heebo', sans-serif;
+      font-size: .72rem; font-weight: 700; letter-spacing: .5px;
+      padding: 4px 10px; border-radius: 20px; cursor: pointer;
+      display: none; align-items: center; gap: 5px;
+      transition: all var(--ease);
     }
-    .edit-btn:hover { color: #fff; background: rgba(255,255,255,.18); }
+    .song-edit-btn:hover { background: rgba(0,0,0,.45); color: #fff; }
+    #song-view.active .song-edit-btn { display: flex; }
 
     /* ── SONG VIEW ── */
     #song-view { width: 100%; height: 100%; display: none; flex-direction: column; align-items: center; }
@@ -650,6 +655,7 @@
 
       <div id="song-view">
         <button class="circ-back" onclick="backToCat()" aria-label="חזרה">‹</button>
+        <button class="song-edit-btn" id="song-edit-btn">✏ עריכה</button>
         <p class="song-view-name" id="song-view-name"></p>
         <div class="song-lyrics-scroll">
           <p id="song-pt-lyrics"></p>
@@ -889,11 +895,8 @@ const circleInner = document.getElementById('circle-inner');
 function makeSongListItem(song, i) {
   const li = document.createElement('li');
   li.className = 'cat-song-item';
-  li.innerHTML =
-    '<span class="song-item-title">' + song.title + '</span>' +
-    '<button class="edit-btn" title="עריכה">✏</button>';
+  li.innerHTML = '<span class="song-item-title">' + song.title + '</span>';
   li.querySelector('.song-item-title').onclick = () => openSongView(i);
-  li.querySelector('.edit-btn').onclick = ev => { ev.stopPropagation(); openEditFlow(i); };
   return li;
 }
 
@@ -954,6 +957,7 @@ function renderSongView() {
   audioEl.pause();
   resetPlayBtn();
   audioEl.src = song.audio || '';
+  document.getElementById('song-edit-btn').onclick = () => openEditFlow(currentIdx);
 }
 
 function backToCat() {
@@ -1120,14 +1124,24 @@ function openUploadDirect() {
    EDIT FLOW — FIX #9
 ================================================================ */
 function openEditFlow(idx) {
-  const song = currentList[idx];
+  const song    = currentList[idx];
+  const catSave = currentCat;
+
   editingSong = {
     id: song.id, title: song.title, pt: song.pt, he: song.he, audio: song.audio,
-    _originalCat: currentCat
+    _originalCat: catSave
   };
 
+  // Close the circle overlay (without resetting currentCat)
+  document.getElementById('circle-overlay').classList.remove('open');
+  closeTranslation();
+  document.getElementById('circle-nav').classList.remove('open');
+  circleInner.classList.remove('song-active');
+  audioEl.pause(); resetPlayBtn();
+  currentCat = catSave; // restore — closeOverlay would clear it
+
   document.getElementById('f-name').value = song.title;
-  document.getElementById('f-cat').value  = currentCat;
+  document.getElementById('f-cat').value  = catSave;
   document.getElementById('f-pt').value   = song.pt === '(sem letra)' ? '' : song.pt;
   document.getElementById('f-he').value   = song.he === '(אין מילים עבריות)' ? '' : song.he;
   document.getElementById('dnd-fname').textContent = song.audio ? '✓ שמע קיים' : '';
