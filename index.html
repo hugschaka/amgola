@@ -838,6 +838,7 @@ async function saveSongToDB(song, catName, audioFile) {
     lyrics_pt: song.pt, lyrics_he: song.he, audio_url: audioUrl
   });
   if (error) { console.error('Supabase insert error:', error); throw new Error('שגיאת שמירה: ' + error.message + (error.code ? ' [' + error.code + ']' : '')); }
+  return audioUrl;
 }
 
 async function updateSongInDB(song, catName, audioFile) {
@@ -855,6 +856,7 @@ async function updateSongInDB(song, catName, audioFile) {
     lyrics_pt: song.pt, lyrics_he: song.he, audio_url: audioUrl
   }).eq('id', song.id);
   if (error) throw new Error('שגיאת עדכון: ' + error.message);
+  return audioUrl;
 }
 
 async function deleteSongFromDB(songId) {
@@ -1279,11 +1281,15 @@ async function handleUpload(e) {
       if (origIdx !== -1) origList.splice(origIdx, 1);
       SONGS[cat].unshift(updatedSong);
     }
-    if (currentCat === origCat || currentCat === cat) currentList = SONGS[currentCat];
+    if (currentCat === origCat || currentCat === cat) {
+      currentList = SONGS[currentCat];
+      refreshCatList();
+    }
 
     closeUpload();
     try {
-      await updateSongInDB(updatedSong, cat, audioFileRef);
+      const newAudioUrl = await updateSongInDB(updatedSong, cat, audioFileRef);
+      if (newAudioUrl) updatedSong.audio = newAudioUrl;
       showToast('✓ "' + name + '" עודכן בהצלחה!');
     } catch(err) {
       showToast('⚠ העדכון נשמר זמנית בלבד — ' + err.message, true);
@@ -1335,7 +1341,8 @@ async function doUpload(song, cat, audioFile) {
   pendingAudio = null;
   closeUpload();
   try {
-    await saveSongToDB(song, cat, audioFile);
+    const audioUrl = await saveSongToDB(song, cat, audioFile);
+    if (audioUrl) song.audio = audioUrl;
     showToast('✓ "' + song.title + '" הועלה בהצלחה!');
   } catch(err) {
     showToast('⚠ השיר נשמר זמנית בלבד — ' + err.message, true);
