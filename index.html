@@ -802,17 +802,16 @@ async function loadSongsFromDB() {
     const { data, error } = await db.from('songs').select('*').order('created_at');
     if (error) { console.error('Supabase load error:', error); showToast('⚠ שגיאת טעינה — ' + error.message, true); return; }
     if (!data) return;
+    // Reset: keep only hardcoded songs (non-UUID), then add fresh from DB
+    Object.keys(SONGS).forEach(cat => { SONGS[cat] = SONGS[cat].filter(s => !isUUID(s.id)); });
     data.forEach(s => {
       if (SONGS[s.category]) {
-        if (!SONGS[s.category].find(x => x.id === s.id)) {
-          SONGS[s.category].push({
-            id: s.id, title: s.title,
-            pt: s.lyrics_pt || '', he: s.lyrics_he || '',
-            audio: s.audio_url || null
-          });
-        }
+        SONGS[s.category].push({
+          id: s.id, title: s.title,
+          pt: s.lyrics_pt || '', he: s.lyrics_he || '',
+          audio: s.audio_url || null
+        });
       }
-      // keep nextId above any existing DB id to avoid conflicts
       if (typeof s.id === 'string' && s.id.startsWith('u')) {
         const n = parseInt(s.id.slice(1), 10);
         if (!isNaN(n) && n >= nextId) nextId = n + 1;
@@ -1211,9 +1210,9 @@ function confirmDelete() {
   }
 
   showToast('השיר נמחק');
-  deleteSongFromDB(songId).catch(err =>
-    showToast('⚠ שגיאת מחיקה מהשרת — ' + err.message, true)
-  );
+  deleteSongFromDB(songId)
+    .then(() => loadSongsFromDB())
+    .catch(err => showToast('⚠ שגיאת מחיקה מהשרת — ' + err.message, true));
 }
 
 function cancelDelete() {
@@ -1288,9 +1287,9 @@ async function handleUpload(e) {
 
     closeUpload();
     try {
-      const newAudioUrl = await updateSongInDB(updatedSong, cat, audioFileRef);
-      if (newAudioUrl) updatedSong.audio = newAudioUrl;
+      await updateSongInDB(updatedSong, cat, audioFileRef);
       showToast('✓ "' + name + '" עודכן בהצלחה!');
+      await loadSongsFromDB();
     } catch(err) {
       showToast('⚠ העדכון נשמר זמנית בלבד — ' + err.message, true);
     }
@@ -1341,9 +1340,9 @@ async function doUpload(song, cat, audioFile) {
   pendingAudio = null;
   closeUpload();
   try {
-    const audioUrl = await saveSongToDB(song, cat, audioFile);
-    if (audioUrl) song.audio = audioUrl;
+    await saveSongToDB(song, cat, audioFile);
     showToast('✓ "' + song.title + '" הועלה בהצלחה!');
+    await loadSongsFromDB();
   } catch(err) {
     showToast('⚠ השיר נשמר זמנית בלבד — ' + err.message, true);
   }
