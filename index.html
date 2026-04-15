@@ -973,6 +973,7 @@ function renderSongView() {
   audioEl.pause();
   resetPlayBtn();
   audioEl.src = song.audio || '';
+  if (song.audio) audioEl.load(); // iOS Safari requires explicit load() after src change
   document.getElementById('song-edit-btn').onclick = () => openEditFlow(currentIdx);
 }
 
@@ -1006,12 +1007,17 @@ function togglePlay() {
   }
   if (btn.dataset.ended === '1') {
     audioEl.currentTime = 0;
-    audioEl.play();
     btn.textContent = '⏸'; btn.dataset.ended = '';
+    audioEl.play().catch(() => { resetPlayBtn(); showToast('שגיאת הפעלה', true); });
     return;
   }
-  if (audioEl.paused) { audioEl.play(); btn.textContent = '⏸'; }
-  else                 { audioEl.pause(); resetPlayBtn(); }
+  if (audioEl.paused) {
+    audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(() => {
+      resetPlayBtn(); showToast('שגיאת הפעלה', true);
+    });
+  } else {
+    audioEl.pause(); resetPlayBtn();
+  }
 }
 
 function resetPlayBtn() {
