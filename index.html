@@ -687,7 +687,7 @@
     <div id="trans-lyrics"></div>
   </div>
 
-  <audio id="main-audio"></audio>
+  <audio id="main-audio" playsinline preload="none"></audio>
 
   <!-- UPLOAD OVERLAY -->
   <div id="upload-overlay" onclick="if(event.target===this) closeUpload()">
@@ -827,7 +827,7 @@ async function saveSongToDB(song, catName, audioFile) {
   let audioUrl = null;
   if (audioFile) {
     const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile);
+    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: audioFile.type || 'audio/mpeg' });
     if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
     const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
     audioUrl = urlData.publicUrl;
@@ -845,7 +845,7 @@ async function updateSongInDB(song, catName, audioFile) {
   let audioUrl = song.audio;
   if (audioFile) {
     const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile);
+    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: audioFile.type || 'audio/mpeg' });
     if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
     const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
     audioUrl = urlData.publicUrl;
