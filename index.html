@@ -823,11 +823,17 @@ async function loadSongsFromDB() {
   }
 }
 
+function getAudioMime(file) {
+  if (file.type && file.type !== 'application/octet-stream') return file.type;
+  const ext = file.name.split('.').pop().toLowerCase();
+  return { mp3:'audio/mpeg', m4a:'audio/mp4', mp4:'audio/mp4', aac:'audio/aac', ogg:'audio/ogg', wav:'audio/wav' }[ext] || 'audio/mpeg';
+}
+
 async function saveSongToDB(song, catName, audioFile) {
   let audioUrl = null;
   if (audioFile) {
     const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: audioFile.type || 'audio/mpeg' });
+    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: getAudioMime(audioFile) });
     if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
     const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
     audioUrl = urlData.publicUrl;
@@ -845,7 +851,7 @@ async function updateSongInDB(song, catName, audioFile) {
   let audioUrl = song.audio;
   if (audioFile) {
     const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: audioFile.type || 'audio/mpeg' });
+    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: getAudioMime(audioFile) });
     if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
     const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
     audioUrl = urlData.publicUrl;
@@ -973,7 +979,6 @@ function renderSongView() {
   audioEl.pause();
   resetPlayBtn();
   audioEl.src = song.audio || '';
-  if (song.audio) audioEl.load(); // iOS Safari requires explicit load() after src change
   document.getElementById('song-edit-btn').onclick = () => openEditFlow(currentIdx);
 }
 
