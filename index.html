@@ -1013,12 +1013,12 @@ function togglePlay() {
   if (btn.dataset.ended === '1') {
     audioEl.currentTime = 0;
     btn.textContent = '⏸'; btn.dataset.ended = '';
-    audioEl.play().catch(() => { resetPlayBtn(); showToast('שגיאת הפעלה', true); });
+    audioEl.play().catch(e => { resetPlayBtn(); showToast('שגיאה: ' + e.name, true); });
     return;
   }
   if (audioEl.paused) {
-    audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(() => {
-      resetPlayBtn(); showToast('שגיאת הפעלה', true);
+    audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(e => {
+      resetPlayBtn(); showToast('שגיאה: ' + e.name, true);
     });
   } else {
     audioEl.pause(); resetPlayBtn();
