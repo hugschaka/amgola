@@ -1012,16 +1012,19 @@ function togglePlay() {
   if (!audioEl.src || audioEl.src === window.location.href) {
     showToast('אין קובץ שמע לשיר זה'); return;
   }
+  const playAndShow = () => audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(e => {
+    const info = e.name + ' net=' + audioEl.networkState + ' err=' + (audioEl.error ? audioEl.error.code : '0');
+    resetPlayBtn(); showToast(info, true);
+  });
   if (btn.dataset.ended === '1') {
     audioEl.currentTime = 0;
     btn.textContent = '⏸'; btn.dataset.ended = '';
-    audioEl.play().catch(e => { resetPlayBtn(); showToast('שגיאה: ' + e.name, true); });
+    audioEl.load(); audioEl.play().catch(e => { resetPlayBtn(); showToast(e.name, true); });
     return;
   }
   if (audioEl.paused) {
-    audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(e => {
-      resetPlayBtn(); showToast('שגיאה: ' + e.name, true);
-    });
+    audioEl.load();
+    playAndShow();
   } else {
     audioEl.pause(); resetPlayBtn();
   }
