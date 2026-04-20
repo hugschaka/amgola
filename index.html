@@ -824,7 +824,9 @@ async function loadSongsFromDB() {
 }
 
 function getAudioMime(file) {
-  if (file.type && file.type !== 'application/octet-stream') return file.type;
+  const t = file.type || '';
+  if (t === 'audio/x-m4a' || t === 'audio/m4a') return 'audio/mp4';
+  if (t && t !== 'application/octet-stream') return t;
   const ext = file.name.split('.').pop().toLowerCase();
   return { mp3:'audio/mpeg', m4a:'audio/mp4', mp4:'audio/mp4', aac:'audio/aac', ogg:'audio/ogg', wav:'audio/wav' }[ext] || 'audio/mpeg';
 }
