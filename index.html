@@ -906,6 +906,7 @@ let currentIdx       = 0;
 let translationOpen  = false;
 let nextId           = 1000;
 let pendingAudio     = null;
+let _blobUrl         = null;
 let editingSong      = null;
 let pendingUploadData = null;
 let deletingSong     = null;
@@ -980,14 +981,17 @@ function renderSongView() {
   document.getElementById('trans-lyrics').textContent   = song.he;
   audioEl.pause();
   resetPlayBtn();
-  while (audioEl.firstChild) audioEl.removeChild(audioEl.firstChild);
-  audioEl.removeAttribute('src');
+  if (_blobUrl) { URL.revokeObjectURL(_blobUrl); _blobUrl = null; }
+  audioEl.src = song.audio || '';
   if (song.audio) {
-    const src = document.createElement('source');
-    src.src = song.audio;
-    src.type = 'audio/mp4';
-    audioEl.appendChild(src);
-    audioEl.load();
+    const sid = song.id;
+    fetch(song.audio).then(r => r.blob()).then(blob => {
+      if (currentList[currentIdx] && currentList[currentIdx].id === sid) {
+        if (_blobUrl) URL.revokeObjectURL(_blobUrl);
+        _blobUrl = URL.createObjectURL(blob);
+        audioEl.src = _blobUrl;
+      }
+    }).catch(() => {});
   }
   document.getElementById('song-edit-btn').onclick = () => openEditFlow(currentIdx);
 }
@@ -1017,7 +1021,7 @@ function nextSong() { currentIdx = (currentIdx + 1) % currentList.length; closeT
 /* FIX #4: replay button when song ends */
 function togglePlay() {
   const btn = document.getElementById('play-pause-btn');
-  if (!audioEl.querySelector('source') && (!audioEl.src || audioEl.src === window.location.href)) {
+  if (!audioEl.src || audioEl.src === window.location.href) {
     showToast('אין קובץ שמע לשיר זה'); return;
   }
   const playAndShow = () => audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(e => {
