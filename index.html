@@ -831,14 +831,21 @@ function getAudioMime(file) {
   return { mp3:'audio/mpeg', m4a:'audio/mp4', mp4:'audio/mp4', aac:'audio/aac', ogg:'audio/ogg', wav:'audio/wav' }[ext] || 'audio/mpeg';
 }
 
+async function uploadAudioViaAPI(audioFile) {
+  const res = await fetch('/api/process-audio', {
+    method: 'POST',
+    headers: { 'Content-Type': getAudioMime(audioFile), 'x-filename': audioFile.name },
+    body: audioFile
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error('שגיאת העלאת שמע: ' + (data.error || res.status));
+  return data.url;
+}
+
 async function saveSongToDB(song, catName, audioFile) {
   let audioUrl = null;
   if (audioFile) {
-    const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: getAudioMime(audioFile) });
-    if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
-    const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
-    audioUrl = urlData.publicUrl;
+    audioUrl = await uploadAudioViaAPI(audioFile);
   }
   const { error } = await db.from('songs').insert({
     id: song.id, title: song.title, category: catName,
@@ -852,11 +859,7 @@ async function updateSongInDB(song, catName, audioFile) {
   if (!isUUID(song.id)) return; // hardcoded songs (s1/m1/h1) not in DB
   let audioUrl = song.audio;
   if (audioFile) {
-    const path = Date.now() + '_' + audioFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const { error: upErr } = await db.storage.from('audio').upload(path, audioFile, { contentType: getAudioMime(audioFile) });
-    if (upErr) throw new Error('שגיאת העלאת שמע: ' + upErr.message);
-    const { data: urlData } = db.storage.from('audio').getPublicUrl(path);
-    audioUrl = urlData.publicUrl;
+    audioUrl = await uploadAudioViaAPI(audioFile);
   }
   const { error } = await db.from('songs').update({
     title: song.title, category: catName,
@@ -906,7 +909,6 @@ let currentIdx       = 0;
 let translationOpen  = false;
 let nextId           = 1000;
 let pendingAudio     = null;
-let _blobUrl         = null;
 let editingSong      = null;
 let pendingUploadData = null;
 let deletingSong     = null;
@@ -981,18 +983,7 @@ function renderSongView() {
   document.getElementById('trans-lyrics').textContent   = song.he;
   audioEl.pause();
   resetPlayBtn();
-  if (_blobUrl) { URL.revokeObjectURL(_blobUrl); _blobUrl = null; }
   audioEl.src = song.audio || '';
-  if (song.audio) {
-    const sid = song.id;
-    fetch(song.audio).then(r => r.blob()).then(blob => {
-      if (currentList[currentIdx] && currentList[currentIdx].id === sid) {
-        if (_blobUrl) URL.revokeObjectURL(_blobUrl);
-        _blobUrl = URL.createObjectURL(blob);
-        audioEl.src = _blobUrl;
-      }
-    }).catch(() => {});
-  }
   document.getElementById('song-edit-btn').onclick = () => openEditFlow(currentIdx);
 }
 
