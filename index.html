@@ -687,7 +687,7 @@
     <div id="trans-lyrics"></div>
   </div>
 
-  <audio id="main-audio" playsinline preload="none"></audio>
+  <audio id="main-audio" playsinline preload="metadata"></audio>
 
   <!-- UPLOAD OVERLAY -->
   <div id="upload-overlay" onclick="if(event.target===this) closeUpload()">
@@ -1013,17 +1013,15 @@ function togglePlay() {
     showToast('אין קובץ שמע לשיר זה'); return;
   }
   const playAndShow = () => audioEl.play().then(() => { btn.textContent = '⏸'; }).catch(e => {
-    const info = e.name + ' net=' + audioEl.networkState + ' err=' + (audioEl.error ? audioEl.error.code : '0');
-    resetPlayBtn(); showToast(info, true);
+    resetPlayBtn(); showToast('שגיאת הפעלה', true);
   });
   if (btn.dataset.ended === '1') {
     audioEl.currentTime = 0;
     btn.textContent = '⏸'; btn.dataset.ended = '';
-    audioEl.load(); audioEl.play().catch(e => { resetPlayBtn(); showToast(e.name, true); });
+    playAndShow();
     return;
   }
   if (audioEl.paused) {
-    audioEl.load();
     playAndShow();
   } else {
     audioEl.pause(); resetPlayBtn();
