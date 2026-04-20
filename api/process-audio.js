@@ -5,8 +5,17 @@ const https = require('https');
 const ffmpegPath = require('ffmpeg-static');
 
 export const config = {
-  api: { bodyParser: { sizeLimit: '20mb' } }
+  api: { bodyParser: false }
 };
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', c => chunks.push(c));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
 
 function supabaseUpload(buf, filename, contentType) {
   const key = process.env.SUPABASE_KEY;
@@ -49,7 +58,7 @@ export default async function handler(req, res) {
   const outputPath = `/tmp/out_${ts}.m4a`;
 
   try {
-    const buf = Buffer.isBuffer(req.body) ? req.body : Buffer.from(req.body);
+    const buf = await readBody(req);
     fs.writeFileSync(inputPath, buf);
 
     execSync(`"${ffmpegPath}" -i "${inputPath}" -c copy -movflags +faststart "${outputPath}" -y`, { timeout: 25000 });
