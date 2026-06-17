@@ -817,9 +817,12 @@ function getAudioMime(file) {
 }
 
 async function uploadAudioViaAPI(audioFile) {
+  // השרת מייצר שם קובץ בעצמו וצריך רק את הסיומת. שולחים סיומת בטוחה ב-ASCII
+  // כדי לא לשבור את ה-header עם תווים עבריים (headers מותרים רק ב-ISO-8859-1).
+  const safeExt = (audioFile.name.split('.').pop() || 'm4a').toLowerCase().replace(/[^a-z0-9]/g, '') || 'm4a';
   const res = await fetch('/api/process-audio', {
     method: 'POST',
-    headers: { 'Content-Type': getAudioMime(audioFile), 'x-filename': audioFile.name },
+    headers: { 'Content-Type': getAudioMime(audioFile), 'x-filename': 'audio.' + safeExt },
     body: audioFile
   });
   const data = await res.json();
